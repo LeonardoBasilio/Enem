@@ -1,3 +1,0 @@
-# Enem
-
-Leonardo Basilio
