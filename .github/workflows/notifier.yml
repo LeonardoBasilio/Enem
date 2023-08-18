@@ -18,4 +18,4 @@ jobs:
         SLACK_TITLE: Comunicado:
         SLACK_USERNAME: BotLeonardo
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-        SLACK_MESSAGE: "Uma nova atualização foi adicionada na Branch main."
+        SLACK_MESSAGE: "Uma nova atualização foi adicionada na Branch Main."
