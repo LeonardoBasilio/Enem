@@ -8,3 +8,6 @@ For data management, I utilized a SQL Server database. The analytical part of th
 This is a preliminary draft, as my intention is to develop a comprehensive portfolio showcasing my expertise. 😄
 
 Feel free to ask if you have any questions or if you'd like further assistance with your project!
+
+Att, 
+Leonardo Basilio
