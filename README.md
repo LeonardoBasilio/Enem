@@ -10,5 +10,4 @@ This is a preliminary draft, as my intention is to develop a comprehensive portf
 Feel free to ask if you have any questions or if you'd like further assistance with your project!
 
 Att, 
-Leonardo Basilio.
-
+Leonardo Basilio Oliveira
