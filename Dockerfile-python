@@ -5,7 +5,14 @@ WORKDIR /app
 
 COPY requirements.txt requirements.txt
 
+COPY Spark_Run.ipynb Spark_Run.ipynb
+
+COPY src /app/src 
 RUN pip install -r requirements.txt
+
+RUN pip install --upgrade pip ipython ipykernel
+
+RUN python -m ipykernel install --user --name=python_docker
 
 EXPOSE 8888
 
