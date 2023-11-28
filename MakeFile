@@ -1,0 +1,25 @@
+Ainda ajustando o arquivo
+rodar o sql sqlserver
+
+docker build --pull --rm -f "Dockerfile-sqlserver" -t enem-sqlserver:latest "." 
+
+docker run -p 1434:1433 --name sql1 -d enem-sqlserver
+
+ docker start sql1
+
+criar imagem do docker
+
+ #docker run -it --rm enem:latest
+ 
+ docker run -p 8888:8888 enem:latest
+
+ executar imagem do docker
+
+  python-jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile-python
+    ports:
+      - "8888:8888"
+    depends_on:
+      - sqlserver
