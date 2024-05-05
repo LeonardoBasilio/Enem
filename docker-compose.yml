@@ -7,17 +7,18 @@ services:
       dockerfile: Dockerfile-sqlserver
     ports:
       - "1434:1433"
-#    volumes:
-#      - sqlserver_data:/var/opt/mssql
-#      - sqlserver_logs:/var/opt/mssql/log
 
-  python-jupyter:
+  spark-jupyter:
     build:
       context: .
-      dockerfile: Dockerfile-python
+      dockerfile: Dockerfile-Jupyter
+    container_name: spark-jupyter
+    volumes:
+      - ./notebooks:/opt/notebooks
+      - spark-logs:/opt/spark/spark-events
     ports:
-      - "8888:8888"
+      - '8888:8888'
 
-#volumes:
-#  sqlserver_data:
-#  sqlserver_logs:
+
+volumes:
+  spark-logs:

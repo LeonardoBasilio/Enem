@@ -1,25 +1,38 @@
-Ainda ajustando o arquivo
-rodar o sql sqlserver
+build:
+	docker compose build
 
-docker build --pull --rm -f "Dockerfile-sqlserver" -t enem-sqlserver:latest "." 
+build-nc:
+	docker compose build --no-cache
 
-docker run -p 1434:1433 --name sql1 -d enem-sqlserver
+build-progress:
+	docker compose build --no-cache --progress=plain
 
- docker start sql1
+clean:
+	docker compose down --rmi="all" --volumes
 
-criar imagem do docker
+down:
+	docker compose down --volumes --remove-orphans
 
- #docker run -it --rm enem:latest
- 
- docker run -p 8888:8888 enem:latest
+run:
+	make down && docker compose up
 
- executar imagem do docker
+run-generated:
+	make down && sh ./generate-docker-compose.sh 3 && docker compose -f docker-compose.generated.yml up
 
-  python-jupyter:
-    build:
-      context: .
-      dockerfile: Dockerfile-python
-    ports:
-      - "8888:8888"
-    depends_on:
-      - sqlserver
+run-scaled:
+	make down && docker compose up --scale spark-worker=3
+
+run-d:
+	make down && docker compose up -d
+
+stop:
+	docker compose stop
+
+submit:
+	docker exec spark-master spark-submit --master spark://spark-master:7077 --deploy-mode client ./apps/$(app)
+
+submit-py-pi:
+	docker exec spark-master spark-submit --master spark://spark-master:7077 /opt/spark/examples/src/main/python/pi.py
+
+rm-results:
+	rm -r data/results/*

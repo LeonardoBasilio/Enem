@@ -1,0 +1,115 @@
+# builder step used to download and configure spark environment
+FROM openjdk:11.0.11-jre-slim-buster as builder
+
+# Add Dependencies for PySpark
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    vim \
+    wget \
+    software-properties-common \
+    ssh \
+    net-tools \
+    ca-certificates \ 
+    python3 \ 
+    python3-pip \ 
+    python3-numpy \
+    python3-matplotlib \
+    python3-scipy \ 
+    python3-pandas \
+    python3-simpy \
+    rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install "/usr/bin/python" "python" "$(which python3)" 1
+
+# Setup the directories for our Spark and Hadoop installations
+ENV SPARK_HOME=${SPARK_HOME:-"/opt/spark"}
+ENV HADOOP_HOME=${HADOOP_HOME:-"/opt/hadoop"}
+
+RUN mkdir -p ${HADOOP_HOME} && mkdir -p ${SPARK_HOME}
+WORKDIR ${SPARK_HOME}
+
+# Fix the value of PYTHONHASHSEED
+# Note: this is needed when you use Python 3.3 or greater
+ENV SPARK_VERSION=3.4.0 \
+HADOOP_VERSION=3 \
+#SPARK_HOME=/opt/spark \
+PYTHONHASHSEED=1
+
+# Download and uncompress spark from the apache archive
+RUN wget --no-verbose -O apache-spark.tgz "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" \
+&& tar -xf apache-spark.tgz -C /opt/spark --strip-components=1 \
+&& rm apache-spark.tgz
+
+
+FROM builder as pyspark-base
+
+# Install python deps
+COPY requirements/requirements.txt .
+RUN pip3 install -r requirements.txt
+
+# Apache spark environment
+FROM builder as apache-spark
+
+
+ENV SPARK_MASTER_PORT=7077 \
+SPARK_MASTER_WEBUI_PORT=8080 \
+SPARK_LOG_DIR=/opt/spark/logs \
+SPARK_MASTER_LOG=/opt/spark/logs/spark-master.out \
+SPARK_WORKER_LOG=/opt/spark/logs/spark-worker.out \
+SPARK_WORKER_WEBUI_PORT=8080 \
+SPARK_WORKER_PORT=7000 \
+SPARK_MASTER="spark://spark-master:7077" \
+SPARK_WORKLOAD="master"
+ENV PYSPARK_PYTHON python3
+
+ENV PATH="/opt/spark/sbin:/opt/spark/bin:${PATH}"
+ENV SPARK_MASTER_HOST spark-master
+
+# Copy the default configurations into $SPARK_HOME/conf
+COPY conf/spark-defaults.conf "$SPARK_HOME/conf"
+
+RUN chmod u+x /opt/spark/sbin/* && \
+    chmod u+x /opt/spark/bin/*
+
+ENV PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
+
+EXPOSE 8080 7077 6066
+
+RUN mkdir -p $SPARK_LOG_DIR && \
+touch $SPARK_MASTER_LOG && \
+touch $SPARK_WORKER_LOG && \
+ln -sf /dev/stdout $SPARK_MASTER_LOG && \
+ln -sf /dev/stdout $SPARK_WORKER_LOG
+
+
+#COPY start-spark.sh /
+
+#CMD ["/bin/bash", "/start-spark.sh"]
+
+ 
+
+FROM pyspark-base as jupyter-notebook
+
+ARG jupyterlab_version=4.0.1
+
+ENV SPARK_REMOTE="sc://spark-master"
+RUN unset SPARK_MASTER
+
+RUN mkdir /opt/notebooks
+
+RUN apt-get update -y && \
+    apt-get install -y python3-pip python3-dev && \
+    pip3 install --upgrade pip && \
+    pip3 install wget jupyterlab==${jupyterlab_version}
+
+
+WORKDIR /opt/notebooks
+
+CMD jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token=
+
+# Copy the entry point script
+COPY start-spark.sh .
+
+# Set the entry point
+ENTRYPOINT ["./start-spark.sh"]
