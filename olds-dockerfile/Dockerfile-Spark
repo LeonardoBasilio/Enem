@@ -1,6 +1,6 @@
 FROM python:3.11-bullseye as spark-base
 
-ARG SPARK_VERSION=3.4.0
+ARG SPARK_VERSION=3.4.3
 
 # Install tools required by the OS
 RUN apt-get update && \
@@ -25,14 +25,11 @@ ENV HADOOP_HOME=${HADOOP_HOME:-"/opt/hadoop"}
 RUN mkdir -p ${HADOOP_HOME} && mkdir -p ${SPARK_HOME}
 WORKDIR ${SPARK_HOME}
 
-ENV SPARK_VERSION=3.4.0 \
-HADOOP_VERSION=3 \
-PYTHONHASHSEED=1
-
 # Download and install Spark
-RUN wget --no-verbose -O apache-spark.tgz "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" \
-&& tar -xf apache-spark.tgz -C /opt/spark --strip-components=1 \
-&& rm apache-spark.tgz
+RUN curl https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz -o spark-${SPARK_VERSION}-bin-hadoop3.tgz \
+ && tar xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz --directory /opt/spark --strip-components 1 \
+ && rm -rf spark-${SPARK_VERSION}-bin-hadoop3.tgz
+
 
 
 FROM spark-base as pyspark-base
@@ -66,22 +63,3 @@ COPY entrypoint.sh .
 ENTRYPOINT ["./entrypoint.sh"]
 
 
-
-FROM pyspark-base as jupyter-notebook
-
-ARG jupyterlab_version=4.0.1
-
-ENV SPARK_REMOTE="sc://spark-master"
-RUN unset SPARK_MASTER
-
-RUN mkdir /opt/notebooks
-
-RUN apt-get update -y && \
-    apt-get install -y python3-pip python3-dev && \
-    pip3 install --upgrade pip && \
-    pip3 install wget jupyterlab==${jupyterlab_version}
-
-
-WORKDIR /opt/notebooks
-
-CMD jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token=
