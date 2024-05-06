@@ -1,0 +1,8 @@
+ipython
+pandas
+pyarrow
+numpy
+pyspark
+grpcio
+grpcio-status
+google-api-python-client

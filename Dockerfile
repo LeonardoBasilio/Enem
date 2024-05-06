@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/mssql/server:2019-latest
+FROM mcr.microsoft.com/mssql/server:2019-latest as sql-server
 
 # Switch to root user for access to apt-get install
 USER root
@@ -18,7 +18,7 @@ WORKDIR /usr/src/app
 # Bundle app source
 COPY setup.sql /usr/src/app
 COPY import-data.sh /usr/src/app
-COPY entrypoint.sh /usr/src/app
+COPY inicialize.sh /usr/src/app
 
 # Convert import-data.sh to UNIX format
 RUN dos2unix *
@@ -28,8 +28,8 @@ RUN chmod +x /usr/src/app/import-data.sh
 
 
 # Switch back to mssql user and run the entrypoint script
-#USER mssql
-#ENTRYPOINT /bin/bash ./entrypoint.sh
+USER mssql
+ENTRYPOINT /bin/bash ./inicialize.sh
 
 FROM python:3.11-bullseye as spark-base
 
@@ -90,9 +90,28 @@ RUN chmod u+x /opt/spark/sbin/* && \
 
 ENV PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
 
+
 # Copy appropriate entrypoint script
 COPY entrypoint.sh .
 
 ENTRYPOINT ["./entrypoint.sh"]
 
 
+FROM pyspark-base as jupyter-notebook
+
+ARG jupyterlab_version=4.0.1
+
+ENV SPARK_REMOTE="sc://spark-master"
+RUN unset SPARK_MASTER
+
+RUN mkdir /opt/notebooks
+
+RUN apt-get update -y && \
+    apt-get install -y python3-pip python3-dev && \
+    pip3 install --upgrade pip && \
+    pip3 install wget jupyterlab==${jupyterlab_version}
+
+
+WORKDIR /opt/notebooks
+
+CMD jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token=$(openssl rand -hex 32)
