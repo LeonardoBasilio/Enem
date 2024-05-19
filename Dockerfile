@@ -109,6 +109,8 @@ RUN mkdir /opt/notebooks
 RUN apt-get update -y && \
     apt-get install -y python3-pip python3-dev && \
     pip3 install --upgrade pip && \
+    #adicionado 10/05/2024
+    pip3 intall unixodbc & \ 
     pip3 install wget jupyterlab==${jupyterlab_version}
 
 
