@@ -1,0 +1,7 @@
+ESTADO_CIVIL_ID;ESTADO_CIVIL_DESCRICAO
+0;Não informado
+1;Solteiro(a)
+2;Casado(a)/Mora com companheiro(a)
+3;Divorciado(a)/Desquitado(a)/Separado(a)
+4;Viúvo(a)
+-2;Sem Referência
